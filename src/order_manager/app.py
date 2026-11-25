@@ -3,6 +3,7 @@ from typing import Never
 
 from flask import Flask, g, request
 
+from .allocation.service import AllocationService
 from .database import Database
 from .http.errors import ApiError, register_error_handlers
 from .http.routes import create_routes
@@ -30,6 +31,9 @@ def create_app(db: Database) -> Flask:
             if not isinstance(g.json_body, (list, dict)):
                 raise ApiError(400, "Invalid JSON body")
 
-    app.register_blueprint(create_routes(OrderRepository(db), CatalogRepository(db)))
+    orders = OrderRepository(db)
+    catalog = CatalogRepository(db)
+    allocation = AllocationService(db, orders, catalog)
+    app.register_blueprint(create_routes(orders, catalog, allocation))
     register_error_handlers(app)
     return app
