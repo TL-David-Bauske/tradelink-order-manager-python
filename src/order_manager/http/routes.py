@@ -2,6 +2,7 @@ import re
 
 from flask import Blueprint, Response, g, jsonify
 
+from ..allocation.service import AllocationService
 from ..models import OrderItem
 from ..repositories.catalog import CatalogRepository
 from ..repositories.orders import OrderRepository
@@ -31,7 +32,9 @@ def parse_items(body: object, catalog: CatalogRepository) -> list[OrderItem]:
     return items
 
 
-def create_routes(orders: OrderRepository, catalog: CatalogRepository) -> Blueprint:
+def create_routes(
+    orders: OrderRepository, catalog: CatalogRepository, allocation: AllocationService,
+) -> Blueprint:
     routes = Blueprint("orders", __name__)
 
     @routes.get("/products")
@@ -66,5 +69,12 @@ def create_routes(orders: OrderRepository, catalog: CatalogRepository) -> Bluepr
         response.status_code = 201
         response.headers["Location"] = f"/orders/{order['id']}"
         return response
+
+    @routes.post("/orders/<order_id>/allocate")
+    def allocate_order(order_id: str) -> tuple[Response, int]:
+        if orders.find(order_id) is None:
+            raise ApiError(404, "Order not found")
+        result = allocation.allocate(order_id)
+        return jsonify(result.body), result.status_code
 
     return routes
