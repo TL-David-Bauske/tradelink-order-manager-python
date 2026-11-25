@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+.mypy_cache/
+*.egg-info/
+build/
+dist/
+data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+.env
